@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 import java.sql.*;
-
+import java.io.*;
 
 public class MyConnection {
 	
@@ -82,7 +82,7 @@ public class MyConnection {
             rs = stmt.executeQuery(sql);
             
 			while(rs.next()){
-				cList.add(rs.getString("code") +","+ rs.getString("credit") +","+ rs.getString("name") +","+ rs.getString("prereq"));
+				cList.add(rs.getString("code") +","+ rs.getString("credit") +","+ rs.getString("name") +","+ rs.getString("semester") +"," + rs.getString("prereq"));
 			}
 
 		}
@@ -124,7 +124,7 @@ public class MyConnection {
             rs = stmt.executeQuery(sql);
 
 			if (rs.next()){
-				result = rs.getString("code") +","+ rs.getString("credit") +","+ rs.getString("name") +","+ rs.getString("prereq");
+				result = rs.getString("code") +","+ rs.getString("credit") +","+ rs.getString("name") +","+ rs.getString("semester") +","+ rs.getString("prereq");
 				return result;
 			}
 
@@ -148,9 +148,17 @@ public class MyConnection {
 		return null;
 	}
 
-	public void addCourse(String code, String credit, String name, String prereq){
-		String sql = "INSERT INTO Courses(code,credit,name,prereq) VALUES(" + "'" + code + "','" + credit + "','" + name + "','" + prereq + "');";
-		System.out.println("Adding course with values: " + "(" + "'" + code + "','" + credit + "','" + name + "','" + prereq + "')" );
+	/**
+	 * Adds a course into the Courses table. Requires at minimum the course code.
+	 * @param code The Course code
+	 * @param credit The number of credits for the course
+	 * @param name The name of the course
+	 * @param semester The semester the course is offered
+	 * @param prereq The prerequesits of a course
+	 */
+	public void addCourse(String code, String credit, String name, String semester, String prereq){
+		String sql = "INSERT INTO Courses(code,credit,name,semester,prereq) VALUES('" + code + "','" + credit + "','" + name + "','" + semester + "','" + prereq + "');";
+		System.out.println("Adding course with values: ('" + code + "','" + credit + "','" + name + "','" + semester + "','" + prereq + "')" );
 
 		dbUpdate(sql);
 	}
@@ -197,7 +205,7 @@ public class MyConnection {
 			while(rs.next()){
 				s.setId(rs.getString("id"));
 				s.setName(rs.getString("name"));
-				s.setDegree("degree");
+				s.setDegree(rs.getString("degree"));
 				cList.add(rs.getString("course"));
 			}
 			s.setCourses(cList);
@@ -237,6 +245,30 @@ public class MyConnection {
 	}
 
 	/**
+	 * NOT FOR GENERAL USE. Completely deletes all Course information from the database.
+	 * 
+	 */
+	public void deleteAllCourses(){
+		System.out.println("Deleting all courses...");
+
+		String sql = "DELETE FROM Courses;" ;
+		dbUpdate(sql);
+	}
+
+	/**
+	 * Completely deletes all records matching a given saved student ID and Name.
+	 * 
+	 * @param id The student id
+	 * @param name The student name
+	 */
+	public void deleteSavedStudent(String id, String name){
+		System.out.println("Deleting information for student id: " + id);
+        
+		String sql = "DELETE FROM SavedStudent WHERE id = '" + id + "' AND name = '" + name + "';" ;
+	    dbUpdate(sql);
+	}
+
+	/**
 	 * Completely deletes all saved student information from the database.
 	 * 
 	 */
@@ -246,16 +278,39 @@ public class MyConnection {
 		String sql = "DELETE FROM SavedStudent;" ;
 	    dbUpdate(sql);
 	}
-	
-    /**
-	 * NOT FOR GENERAL USE. Completely deletes all Course information from the database.
-	 * 
-	 */
-	public void deleteAllCourses(){
-		System.out.println("Deleting all courses...");
 
-		String sql = "DELETE FROM Courses;" ;
-		dbUpdate(sql);
+
+	/**
+	 * Deletes all current course records in the Courses table, and replaces them with the courselistA2 text file contents.
+	 Note that the textfile must be in the same directory as the program is run from or this method will
+	 crash. There is no error checking.
+	 */
+	public void repopulateCourses(){
+		System.out.println("Repopulating Courses table...");
+		//read courselist into stream
+		try{
+			File file = new File("./courselistA2.txt"); 
+			BufferedReader br = new BufferedReader(new FileReader(file)); 
+			
+			String st;
+			ArrayList<String> rawCourses = new ArrayList<String>();
+			while ((st = br.readLine()) != null) {
+				rawCourses.add(st);
+			}
+			String[] splitC;
+			for (String rawCourse : rawCourses){
+				splitC = rawCourse.split(",");
+				
+				if (splitC.length > 4){
+					addCourse(splitC[0],splitC[1],splitC[2],splitC[3],splitC[4]);
+				}else{
+					addCourse(splitC[0],splitC[1],splitC[2],splitC[3],"");
+				}
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 	
 	/**

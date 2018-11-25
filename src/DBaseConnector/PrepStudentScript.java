@@ -1,17 +1,25 @@
 import java.util.ArrayList;
-import java.sql.*;
+import java.sql.*; 
 
 public class PrepStudentScript {
+
+	/*This class is used only to reset the tables in your database to empty*/   
+
 	
 	private Connection conn = null;
 	private Statement stmt = null;
 
-	public PrepStudentScript(){
+	/**
+	 * The function which builds your Courses and SavedStudent tables
+	 * 
+	 * @param fullyResetTables If true, the tables will be completely deleted and new tables made.
+	 */
+	public PrepStudentScript(boolean fullyResetTables){
 		String name = DBDetails.username;
 		String pass = DBDetails.password;
 		
+		if (fullyResetTables == true) {deleteT(name,pass); }    //Use to delete the tables completely
 		runSript(name, pass);   //Use to build out the required tables
-		// deleteT(name,pass);     //Use to delete the tables completely
 	}
 
 	public void deleteT(String n, String p){
@@ -41,7 +49,8 @@ public class PrepStudentScript {
 	        String sql = "CREATE TABLE IF NOT EXISTS Courses (\n"
 	                + "	code text NOT NULL,\n"
 	                + "	credit text,\n"
-	                + "	name text,\n"
+					+ "	name text,\n"
+					+ " semester text,\n"
 	                + "	prereq text\n"
 	                + ");";
 	        
@@ -68,7 +77,7 @@ public class PrepStudentScript {
 	}
 	
 	public static void main (String[] args){
-		PrepStudentScript sInstance = new PrepStudentScript();
+		PrepStudentScript sInstance = new PrepStudentScript(true);
 	}
 
 }
